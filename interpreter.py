@@ -137,16 +137,92 @@ class Lexer:
         else:
             return Token(tokenType_FLOAT, float(numStr))
 
+####################################
+# NODES
+####################################
 
+class NumberNode:
+    def __init__(self, tokens):
+        self.tokens = tokens
+    def __repr__(self):
+        return f'{self.tokens}'
+
+class BinaryOperationNode:
+    def __init__(self, leftNode, operatorToken, rightNode):
+        self.leftNode = leftNode
+        self.operatorToken = operatorToken
+        self.rightNode = rightNode
+
+    def __repr__(self):
+        return f'{self.leftNode}, {self.operatorToken}, {self.rightNode}'
+
+####################################
+# PARSER
+####################################
+
+class Parser:
+    def __init__(self,tokens):
+        self.tokens = tokens
+        self.tokenIndex = -1
+        self.advance()
+    
+    def advance(self):
+        self.tokenIndex += 1
+        if self.tokenIndex < len(self.tokens):
+            self.currentToken = self.tokens[self.tokenIndex]
+        return self.currentToken
+
+    ###########################################################
+
+    def parse(self):
+        res = self.expression()
+        return res
+
+
+
+    def factor(self):
+        token = self.currentToken
+
+        if token.type in (tokenType_INT, tokenType_FLOAT):
+            self.advance()
+            return NumberNode(token)
+
+
+    def term(self):
+        return self.binaryOperation(self.factor, (tokenType_MUL, tokenType_DIV))
+
+    def expression(self):
+        return self.binaryOperation(self.term, (tokenType_PLUS, tokenType_MINUS))
+
+    def binaryOperation(self, func, ops):
+        '''
+        func = it is a function, that whether it is the term or factor we are looking for.
+        ops = operation tokens like, PLUS, MINUS, DIV, MILTIPLICATION
+        '''
+        leftFactor = func()
+
+        while self.currentToken.type in ops:
+            operatorToken = self.currentToken
+            self.advance()
+            rightFactor = func()
+            leftFactor = BinaryOperationNode(leftFactor,operatorToken,rightFactor)
+
+        return leftFactor
 
 ####################################
 # MAIN RUN ENVIRONMENT
 ####################################
 
 def run(fileName, text):
+    #Generate toekns
     lexer = Lexer(fileName, text)
     tokens, error = lexer.makeTokens()
+    if error: return None, error
 
-    return tokens, error
+    #Generate AST
+    parser = Parser(tokens)
+    ast = parser.parse()
+
+    return ast, None
 
 

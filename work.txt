@@ -1,0 +1,3 @@
+Step1: Lexer ---> Done
+Step2: Parser ---> In Progress
+Step3: Interpreter
